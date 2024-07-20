@@ -45,6 +45,8 @@ function seededRandom(seed = 0) {
 	}
 
 	let rollInternal = function(min, max, rollCount, previousResult) {
+		max = max - (min ?? 0);
+
 		max = max + 0.971;
 
 		let result = getNewBaseSeed(seed, rollCount, previousResult);
@@ -52,6 +54,8 @@ function seededRandom(seed = 0) {
 		result = result % max;
 
 		result = ~~result;
+
+		result += min;
 
 		return result;
 	}
@@ -190,5 +194,5 @@ function runTimings() {
 	console.log("took " + resultTime);
 }
 
-var hans = new seededRandom(34312, 100);
+var hans = new seededRandom(19084723, 100);
 
