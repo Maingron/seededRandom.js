@@ -16,15 +16,13 @@ function seededRandom(seed = 0) {
 	}
 
 	let rollInternal = function(min, max, rollCount, previousResult) {
-		let result = 0;
+		max = max + 0.98;
 
-		max = max + 0.1;
-
-		result = getNewBaseSeed(seed, rollCount, previousResult);
+		let result = getNewBaseSeed(seed, rollCount, previousResult);
 
 		result = result % max;
 
-		result = Math.round(result);
+		result = result|0;
 
 		return result;
 	}
