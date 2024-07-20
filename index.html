@@ -4,5 +4,49 @@
 		<script src="index.js"></script>
 	</head>
 	<body>
+
+		<div class="bla bla1"></div>
+		<div class="bla bla2"></div>
+		<div class="bla bla3"></div>
+		<div class="bla bla4"></div>
+
+		<details>
+			<summary>Color Example</summary>
+
+			<script>
+				var colors = hans.custom.getArray(0, 255, 3 * 13000, 0, 0);
+	
+				for(var i = 0; i < (colors.length / 3); i++) {
+					document.write("<div class='cd' style='background: rgb("+colors.pop() +","+colors.pop() +","+colors.pop()+")'></div>");
+				}
+			</script>
+
+			<style>
+				html, body {
+					margin: 0;
+					padding: 0;
+					color-scheme: dark;
+				}
+				details {
+					height: 95vh;
+					width: 100vw;
+					position: relative;
+				}
+
+				
+				div.bla {
+					display: inline-block;
+					height: 200px;
+					width: 200px;
+				}
+
+				div.cd {
+					display: inline-block;
+					width: 1%;
+					height: 1.5%;
+					float: left;
+				}
+			</style>
+		</details>
 	</body>
 </html>
