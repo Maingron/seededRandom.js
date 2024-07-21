@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="../index.js"></script>
+	</head>
+	<body>
+
+		<script>
+			var colors = hans.custom.getArray(0, 255, 3 * 23000, 0, 0);
+
+			for(var i = 0; i < colors.length; i+=3) {
+				if(i % 300 > 270 || i % 300 < 30) {
+					document.write("<div class='cd' style='background: rgb("+colors[i] +","+colors[i] +","+colors[i]+")'></div>");
+				} else if(i % 300 > 250) {
+					document.write("<div class='cd' style='background: rgb("+0 +","+0 +","+colors[i + 2]+")'></div>");
+				} else if(i % 300 > 230) {
+					document.write("<div class='cd' style='background: rgb("+0 +","+colors[i + 1] +","+0+")'></div>");
+				} else if(i % 300 > 210) {
+					document.write("<div class='cd' style='background: rgb("+colors[i] +","+0+","+0+")'></div>");
+				} else if(i % 300 > 190) {
+					document.write("<div class='cd' style='background: rgb("+0 +","+colors[i + 2] +","+colors[i + 2]+")'></div>");
+				} else if(i % 300 > 170) {
+					document.write("<div class='cd' style='background: rgb("+colors[i] +","+colors[i + 1] +","+0+")'></div>");
+				} else if(i % 300 > 150) {
+					document.write("<div class='cd' style='background: rgb("+colors[i] +","+0+","+colors[i + 2]+")'></div>");
+				} else {
+					document.write("<div class='cd' style='background: rgb("+colors[i] +","+colors[i + 1]+","+colors[i + 2]+")'></div>");
+				}
+			}
+		</script>
+
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+				color-scheme: dark;
+				height: auto;
+				width: 100%;
+			}
+
+			div.cd {
+				display: inline-block;
+				width: 1%;
+				height: auto;
+				aspect-ratio: 1/1;
+				float: left;
+			}
+		</style>
+	</body>
+</html>
