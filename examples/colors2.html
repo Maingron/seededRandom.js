@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src="../index.js"></script>
+	</head>
+	<body>
+		<script>
+			var myColorObj = new seededRandom(423);
+			var colors = myColorObj.custom.getArray(0, 255, 3 * 6000, 0, 0);
+
+			for(var i = 0; i < colors.length; i+=3) {
+				document.write("<div class='cd' style='background: rgb("+colors[i] +","+colors[i + 1]+","+colors[i + 2]+")'>rgb("+colors[i] +","+colors[i + 1]+","+colors[i + 2]+")</div>");
+			}
+		</script>
+
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+				color-scheme: dark;
+				height: auto;
+				width: 100%;
+			}
+
+			div.cd {
+				display: inline-block;
+				width: 10%;
+				height: auto;
+				aspect-ratio: 2.75/1;
+				float: left;
+			}
+		</style>
+	</body>
+</html>
