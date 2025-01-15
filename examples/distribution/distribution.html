@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randomness Distribution</title>
+    <script src="../../index.js"></script>
+</head>
+<body>
+    <h1>Randomness Distribution</h1>
+    <canvas id="distributionChart" width="1700" height="800"></canvas>
+    <input type="range" id="seedSlider">
+    <span id="seedValue">1</span>
+    <script>
+        const htmlConfig = {
+            bins: 100,
+            minSeed: 1,
+            maxSeed: 100,
+            numWorkers: navigator.hardwareConcurrency || 4,
+            colors: ['rgba(75, 192, 192, 1)', 'rgba(192, 75, 75, 1)', 'rgba(75, 75, 192, 1)', 'rgba(192, 192, 75, 1)'],
+            rolls: 20000,
+            min: 1,
+            max: 100
+        };
+
+        let seed = htmlConfig.minSeed;
+        let dataStore = new Array(htmlConfig.maxSeed - htmlConfig.minSeed + 1).fill(null);
+
+        function drawChart(data, bins, color, seed) {
+            const canvas = document.getElementById('distributionChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const binWidth = width / data.length;
+            const maxCount = Math.max(...data);
+
+            ctx.clearRect(0, 0, width, height);
+
+            data.forEach((count, index) => {
+                const barHeight = (count / maxCount) * height;
+                ctx.fillStyle = color;
+                ctx.fillRect(index * binWidth, height - barHeight, binWidth, barHeight);
+
+                // Draw range label
+                const rangeStart = Math.floor(index * ((htmlConfig.max - htmlConfig.min + 1) / bins)) + htmlConfig.min;
+                const rangeEnd = Math.floor((index + 1) * ((htmlConfig.max - htmlConfig.min + 1) / bins)) + htmlConfig.min - 1;
+                ctx.save();
+                ctx.translate(index * binWidth + binWidth / 2 + 3, height - 5);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'left';
+                ctx.fillStyle = 'black';
+				ctx.font = '12px Arial';
+                ctx.fillText(`${rangeStart}-${rangeEnd}, ${count}`, 0, 0);
+                ctx.restore();
+            });
+
+            // Draw seed at top left
+            ctx.fillStyle = 'black';
+            ctx.font = '20px Arial';
+            ctx.fillText(`Seed: ${seed}`, 10, 30);
+        }
+
+        function drawCurrentSeed() {
+            drawChart(dataStore[seed - htmlConfig.minSeed], htmlConfig.bins, htmlConfig.colors[seed % htmlConfig.colors.length], seed);
+        }
+
+        document.getElementById('seedSlider').addEventListener('input', (event) => {
+            seed = parseInt(event.target.value);
+            document.getElementById('seedValue').textContent = seed;
+            if (dataStore[seed - htmlConfig.minSeed]) {
+                drawCurrentSeed();
+            }
+        });
+
+        function generateAllData() {
+            const workers = [];
+            let completed = 0;
+
+            for (let i = 0; i < htmlConfig.numWorkers; i++) {
+                const worker = new Worker('worker.js');
+                worker.onmessage = function(e) {
+                    const { seed, distributionData } = e.data;
+                    dataStore[seed - htmlConfig.minSeed] = distributionData;
+                    completed++;
+                    if (completed === htmlConfig.maxSeed - htmlConfig.minSeed + 1) {
+                        drawCurrentSeed();
+                    }
+                };
+                workers.push(worker);
+            }
+
+            let currentWorker = 0;
+            for (let currentSeed = htmlConfig.minSeed; currentSeed <= htmlConfig.maxSeed; currentSeed++) {
+                workers[currentWorker].postMessage({ 
+                    seed: currentSeed, 
+                    bins: htmlConfig.bins, 
+                    rolls: htmlConfig.rolls, 
+                    min: htmlConfig.min, 
+                    max: htmlConfig.max 
+                });
+                currentWorker = (currentWorker + 1) % htmlConfig.numWorkers;
+            }
+        }
+
+        document.getElementById('seedSlider').min = htmlConfig.minSeed;
+        document.getElementById('seedSlider').max = htmlConfig.maxSeed;
+        document.getElementById('seedSlider').value = seed;
+
+        generateAllData();
+    </script>
+</body>
+</html>
