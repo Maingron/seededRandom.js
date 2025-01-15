@@ -9,22 +9,47 @@
 <body>
     <h1>Randomness Distribution</h1>
     <canvas id="distributionChart" width="1700" height="800"></canvas>
-    <input type="range" id="seedSlider">
-    <span id="seedValue">1</span>
+    <div style="display:block; width: 100%">
+        <label>
+            Seed
+            <input type="range" id="seedSlider" style="width:50%">
+            <span id="seedValue">1</span>
+        </label>
+        <br>
+        <label>
+            Chunks (Back in time by)
+            <input type="range" id="timeSlider" style="width:50%">
+            <span id="timeValue">0</span>
+        </label>
+    </div>
     <script>
         const htmlConfig = {
             bins: 100,
             minSeed: 1,
-            maxSeed: 100,
-            numWorkers: navigator.hardwareConcurrency || 4,
-            colors: ['rgba(75, 192, 192, 1)', 'rgba(192, 75, 75, 1)', 'rgba(75, 75, 192, 1)', 'rgba(192, 192, 75, 1)'],
-            rolls: 20000,
+            maxSeed: 20,
+            numWorkers: Math.max(navigator.hardwareConcurrency - 2, 2) || 2,
+            colors: [
+                'rgba(75, 192, 192, 1)', 
+                'rgba(192, 75, 75, 1)', 
+                'rgba(75, 75, 192, 1)', 
+                'rgba(192, 192, 75, 1)',
+                'rgba(75, 192, 75, 1)', 
+                'rgba(192, 75, 192, 1)', 
+                'rgba(75, 75, 75, 1)', 
+                'rgba(192, 192, 192, 1)',
+                'rgba(255, 165, 0, 1)', 
+                'rgba(255, 105, 180, 1)'
+            ],
+            rolls: 1000000,
             min: 1,
-            max: 100
+            max: 2100000000,
+            chunkSize: 10000
         };
 
         let seed = htmlConfig.minSeed;
         let dataStore = new Array(htmlConfig.maxSeed - htmlConfig.minSeed + 1).fill(null);
+        let timeStore = new Array(htmlConfig.maxSeed - htmlConfig.minSeed + 1).fill(null).map(() => []);
+        let currentTimeIndex = 0;
 
         function drawChart(data, bins, color, seed) {
             const canvas = document.getElementById('distributionChart');
@@ -61,15 +86,22 @@
         }
 
         function drawCurrentSeed() {
-            drawChart(dataStore[seed - htmlConfig.minSeed], htmlConfig.bins, htmlConfig.colors[seed % htmlConfig.colors.length], seed);
+            const data = timeStore[seed - htmlConfig.minSeed][timeStore[seed - htmlConfig.minSeed].length - 1 - currentTimeIndex];
+            drawChart(data, htmlConfig.bins, htmlConfig.colors[seed % htmlConfig.colors.length], seed);
         }
 
         document.getElementById('seedSlider').addEventListener('input', (event) => {
             seed = parseInt(event.target.value);
             document.getElementById('seedValue').textContent = seed;
-            if (dataStore[seed - htmlConfig.minSeed]) {
-                drawCurrentSeed();
-            }
+            document.getElementById('timeSlider').max = timeStore[seed - htmlConfig.minSeed].length - 1;
+            document.getElementById('timeSlider').value = currentTimeIndex;
+            drawCurrentSeed();
+        });
+
+        document.getElementById('timeSlider').addEventListener('input', (event) => {
+            currentTimeIndex = parseInt(event.target.value);
+            document.getElementById('timeValue').textContent = currentTimeIndex;
+            drawCurrentSeed();
         });
 
         function generateAllData() {
@@ -79,11 +111,17 @@
             for (let i = 0; i < htmlConfig.numWorkers; i++) {
                 const worker = new Worker('worker.js');
                 worker.onmessage = function(e) {
-                    const { seed, distributionData } = e.data;
-                    dataStore[seed - htmlConfig.minSeed] = distributionData;
-                    completed++;
-                    if (completed === htmlConfig.maxSeed - htmlConfig.minSeed + 1) {
+                    const { seed, distributionData, isPartial } = e.data;
+                    const seedIndex = seed - htmlConfig.minSeed;
+                    if (isPartial) {
+                        timeStore[seedIndex].push([...distributionData]);
                         drawCurrentSeed();
+                    } else {
+                        dataStore[seedIndex] = distributionData;
+                        completed++;
+                        if (completed === htmlConfig.maxSeed - htmlConfig.minSeed + 1) {
+                            drawCurrentSeed();
+                        }
                     }
                 };
                 workers.push(worker);
@@ -96,7 +134,8 @@
                     bins: htmlConfig.bins, 
                     rolls: htmlConfig.rolls, 
                     min: htmlConfig.min, 
-                    max: htmlConfig.max 
+                    max: htmlConfig.max, 
+                    chunkSize: htmlConfig.chunkSize
                 });
                 currentWorker = (currentWorker + 1) % htmlConfig.numWorkers;
             }

@@ -1,20 +1,19 @@
 importScripts('../../index.js');
 
 onmessage = function(e) {
-    const { seed, bins, rolls, min, max } = e.data;
+    const { seed, bins, rolls, min, max, chunkSize } = e.data;
     const randomGenerator = new seededRandom(seed);
-    let previousRandom = 0;
-    let randomNumbers = [];
-    let newRandom = 0;
-    randomNumbers = randomGenerator.blackbox.getArray(min, max, rolls);
-    // for (let i = 0; i < rolls; i++) {
-    //     newRandom = randomGenerator.custom.roll(min, max, 1, previous);
-    //     previousRandom = newRandom;
-    //     randomNumbers.push(newRandom);
-    // }
+    let distributionData = new Array(bins).fill(0);
 
-    const distributionData = getDistributionData(randomNumbers, bins, min, max);
-    postMessage({ seed, distributionData });
+    for (let i = 0; i < rolls; i += chunkSize) {
+        let chunkRolls = Math.min(chunkSize, rolls - i);
+        let randomNumbers = randomGenerator.blackbox.getArray(min, max, chunkRolls);
+        let chunkDistributionData = getDistributionData(randomNumbers, bins, min, max);
+        distributionData = mergeDistributionData(distributionData, chunkDistributionData);
+        postMessage({ seed, distributionData, isPartial: true });
+    }
+
+    postMessage({ seed, distributionData, isPartial: false });
 };
 
 function getDistributionData(randomNumbers, bins, min, max) {
@@ -25,4 +24,8 @@ function getDistributionData(randomNumbers, bins, min, max) {
         data[index]++;
     });
     return data;
+}
+
+function mergeDistributionData(data1, data2) {
+    return data1.map((count, index) => count + data2[index]);
 }
