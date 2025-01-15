@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Randomness Distribution</title>
+    <script src="index.js"></script>
+</head>
+<body>
+    <h1>Randomness Distribution</h1>
+    <canvas id="distributionChart" width="1700" height="800"></canvas>
+    <script>
+        function getDistributionData(randomNumbers, bins) {
+            let data = new Array(bins).fill(0);
+            randomNumbers.forEach(num => {
+                let index = Math.floor((num - 1) / (100000 / bins));
+                data[index]++;
+            });
+            return data;
+        }
+
+        function drawChart(data, bins, color) {
+            const canvas = document.getElementById('distributionChart');
+            const ctx = canvas.getContext('2d');
+            const width = canvas.width;
+            const height = canvas.height;
+            const binWidth = width / data.length;
+            const maxCount = Math.max(...data);
+
+            data.forEach((count, index) => {
+                const barHeight = (count / maxCount) * height;
+                ctx.fillStyle = color;
+                ctx.fillRect(index * binWidth, height - barHeight, binWidth, barHeight);
+
+                // Draw range label
+                const rangeStart = Math.floor(index * (100000 / bins)) + 1;
+                const rangeEnd = Math.floor((index + 1) * (100000 / bins));
+                ctx.save();
+                ctx.translate(index * binWidth + binWidth / 2 + 3, height - 5);
+                ctx.rotate(-Math.PI / 2);
+                ctx.textAlign = 'left';
+                ctx.fillStyle = 'black';
+                ctx.fillText(`${rangeStart}-${rangeEnd}, ${count}`, 0, 0);
+                ctx.restore();
+            });
+        }
+
+        const bins = 100;
+        const colors = ['rgba(75, 192, 192, 0.2)', 'rgba(192, 75, 75, 0.2)', 'rgba(75, 75, 192, 0.2)', 'rgba(192, 192, 75, 0.2)'];
+
+        function drawAllDistributions() {
+            let seed = 12344;
+
+            function drawNext() {
+                if (seed > 12345) return;
+
+                const randomGenerator = new seededRandom(seed);
+                let previousRandom = 0;
+                let randomNumbers = [];
+                let newRandom = 0;
+                for (let i = 0; i < 1000000; i++) {
+                    newRandom = randomGenerator.custom.roll(1, 100000, 1, previousRandom);
+                    previousRandom = newRandom;
+                    randomNumbers.push(newRandom);
+                }
+
+                const distributionData = getDistributionData(randomNumbers, bins);
+                drawChart(distributionData, bins, colors[seed % colors.length]);
+
+                seed++;
+                setTimeout(drawNext, 1); // Delay of 100ms between each seed
+            }
+
+            drawNext();
+        }
+
+        drawAllDistributions();
+    </script>
+</body>
+</html>
